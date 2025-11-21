@@ -77,13 +77,18 @@ class Encoder(nn.Module):
     Encoder: Takes example pairs and outputs latent program distribution
     """
     
-    def __init__(self, input_dim: int = 1, hidden_dim: int = 128, latent_dim: int = 64):
+    def __init__(self, input_dim: int = 1, hidden_dim: int = 128, latent_dim: int = 64, max_length: int = 20):
         super().__init__()
         self.latent_dim = latent_dim
+        self.hidden_dim = hidden_dim
         
-        # Process each input-output pair
-        self.pair_encoder = nn.Sequential(
-            nn.Linear(input_dim * 2, hidden_dim),
+        # Process each sequence with LSTM
+        self.input_encoder = nn.LSTM(1, hidden_dim // 2, batch_first=True)
+        self.output_encoder = nn.LSTM(1, hidden_dim // 2, batch_first=True)
+        
+        # Combine input and output encodings
+        self.pair_combiner = nn.Sequential(
+            nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
             nn.Linear(hidden_dim, hidden_dim),
             nn.ReLU(),
@@ -107,12 +112,21 @@ class Encoder(nn.Module):
         """
         batch_size, num_examples, seq_len = inputs.shape
         
-        # Combine input and output for each pair
-        pairs = torch.cat([inputs, outputs], dim=-1)  # [batch, num_examples, seq_len*2]
+        # Reshape to process all sequences at once
+        inputs_flat = inputs.view(batch_size * num_examples, seq_len, 1)
+        outputs_flat = outputs.view(batch_size * num_examples, seq_len, 1)
         
-        # Reshape for processing
-        pairs = pairs.view(batch_size * num_examples, -1)
-        pair_encodings = self.pair_encoder(pairs)  # [batch*num_examples, hidden_dim]
+        # Encode input and output sequences
+        _, (input_hidden, _) = self.input_encoder(inputs_flat)
+        _, (output_hidden, _) = self.output_encoder(outputs_flat)
+        
+        # Combine encodings
+        input_enc = input_hidden[-1]  # [batch*num_examples, hidden_dim//2]
+        output_enc = output_hidden[-1]  # [batch*num_examples, hidden_dim//2]
+        combined = torch.cat([input_enc, output_enc], dim=-1)  # [batch*num_examples, hidden_dim]
+        
+        # Process combined encoding
+        pair_encodings = self.pair_combiner(combined)  # [batch*num_examples, hidden_dim]
         pair_encodings = pair_encodings.view(batch_size, num_examples, -1)
         
         # Aggregate across examples
@@ -134,9 +148,13 @@ class Decoder(nn.Module):
     def __init__(self, input_dim: int = 1, latent_dim: int = 64, hidden_dim: int = 128, max_length: int = 20):
         super().__init__()
         self.max_length = max_length
+        self.hidden_dim = hidden_dim
         
-        # Combine latent program with input
-        self.input_processor = nn.Linear(input_dim + latent_dim, hidden_dim)
+        # Process input sequence
+        self.input_encoder = nn.LSTM(1, hidden_dim // 2, batch_first=True)
+        
+        # Combine latent with encoded input
+        self.latent_processor = nn.Linear(latent_dim + hidden_dim // 2, hidden_dim)
         
         # Autoregressive decoder
         self.decoder_rnn = nn.LSTM(hidden_dim, hidden_dim, num_layers=2, batch_first=True)
@@ -154,16 +172,20 @@ class Decoder(nn.Module):
         """
         batch_size, seq_len = inputs.shape
         
-        # Expand latent to match sequence
-        z_expanded = z.unsqueeze(1).expand(batch_size, seq_len, -1)  # [batch, seq_len, latent_dim]
+        # Encode input sequence
         inputs_expanded = inputs.unsqueeze(-1)  # [batch, seq_len, 1]
+        _, (input_hidden, _) = self.input_encoder(inputs_expanded)
+        input_enc = input_hidden[-1]  # [batch, hidden_dim//2]
         
-        # Combine
-        combined = torch.cat([inputs_expanded, z_expanded], dim=-1)  # [batch, seq_len, 1+latent_dim]
-        processed = self.input_processor(combined)
+        # Combine with latent
+        combined = torch.cat([z, input_enc], dim=-1)  # [batch, latent_dim + hidden_dim//2]
+        processed = self.latent_processor(combined)  # [batch, hidden_dim]
+        
+        # Expand for sequence
+        processed = processed.unsqueeze(1).expand(batch_size, seq_len, -1)  # [batch, seq_len, hidden_dim]
         
         # Decode
-        decoded, _ = self.decoder_rnn(processed)
+        decoded, _ = self.decoder_rnn(processed)  # [batch, seq_len, hidden_dim]
         outputs = self.output_layer(decoded).squeeze(-1)  # [batch, seq_len]
         
         return outputs
@@ -177,7 +199,7 @@ class LatentProgramNetwork(nn.Module):
     def __init__(self, latent_dim: int = 64, hidden_dim: int = 128, max_length: int = 20):
         super().__init__()
         self.latent_dim = latent_dim
-        self.encoder = Encoder(input_dim=1, hidden_dim=hidden_dim, latent_dim=latent_dim)
+        self.encoder = Encoder(input_dim=1, hidden_dim=hidden_dim, latent_dim=latent_dim, max_length=max_length)
         self.decoder = Decoder(input_dim=1, latent_dim=latent_dim, hidden_dim=hidden_dim, max_length=max_length)
     
     def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
