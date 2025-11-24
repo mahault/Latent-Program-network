@@ -1,0 +1,318 @@
+{
+  "no_search": {
+    "per_program": {
+      "square": {
+        "accuracy": 0.0,
+        "mse": 3311.4474086761475,
+        "num_samples": 16
+      },
+      "negate": {
+        "accuracy": 0.0,
+        "mse": 26.560754255814985,
+        "num_samples": 11
+      },
+      "abs": {
+        "accuracy": 0.0,
+        "mse": 24.01811081712896,
+        "num_samples": 22
+      },
+      "add_3": {
+        "accuracy": 0.0,
+        "mse": 23.97399829228719,
+        "num_samples": 15
+      },
+      "add_5": {
+        "accuracy": 0.0,
+        "mse": 32.5435327032338,
+        "num_samples": 23
+      },
+      "multiply_2": {
+        "accuracy": 0.0,
+        "mse": 108.16718019757953,
+        "num_samples": 14
+      },
+      "multiply_3": {
+        "accuracy": 0.0,
+        "mse": 206.1710228553185,
+        "num_samples": 13
+      },
+      "subtract_1": {
+        "accuracy": 0.0,
+        "mse": 26.918168236227597,
+        "num_samples": 17
+      },
+      "increment": {
+        "accuracy": 0.0,
+        "mse": 22.142754634221394,
+        "num_samples": 12
+      },
+      "decrement": {
+        "accuracy": 0.0,
+        "mse": 22.073450446128845,
+        "num_samples": 8
+      },
+      "filter_positive": {
+        "accuracy": 0.058823529411764705,
+        "mse": 5.032311301897554,
+        "num_samples": 17
+      },
+      "filter_negative": {
+        "accuracy": 0.14285714285714285,
+        "mse": 5.02258483001164,
+        "num_samples": 14
+      },
+      "filter_even": {
+        "accuracy": 0.0,
+        "mse": 7.386288187901179,
+        "num_samples": 15
+      },
+      "filter_odd": {
+        "accuracy": 0.07142857142857142,
+        "mse": 4.209169083407947,
+        "num_samples": 14
+      },
+      "filter_greater_than_5": {
+        "accuracy": 0.3157894736842105,
+        "mse": 3.926548355504086,
+        "num_samples": 19
+      },
+      "reverse": {
+        "accuracy": 0.0,
+        "mse": 26.707499821980793,
+        "num_samples": 15
+      },
+      "sort_ascending": {
+        "accuracy": 0.0,
+        "mse": 23.42177775031642,
+        "num_samples": 19
+      },
+      "sort_descending": {
+        "accuracy": 0.0,
+        "mse": 21.75972111084882,
+        "num_samples": 17
+      },
+      "take_first_3": {
+        "accuracy": 0.0,
+        "mse": 15.61685814176287,
+        "num_samples": 7
+      },
+      "take_last_3": {
+        "accuracy": 0.0,
+        "mse": 26.048575128827775,
+        "num_samples": 7
+      },
+      "duplicate_each": {
+        "accuracy": 0.0,
+        "mse": 43.51526205539703,
+        "num_samples": 20
+      },
+      "remove_duplicates": {
+        "accuracy": 0.0,
+        "mse": 21.821341196695965,
+        "num_samples": 15
+      },
+      "sum": {
+        "accuracy": 0.0,
+        "mse": 9.646050816511407,
+        "num_samples": 17
+      },
+      "max": {
+        "accuracy": 0.0,
+        "mse": 3.3137426641252308,
+        "num_samples": 18
+      },
+      "min": {
+        "accuracy": 0.0,
+        "mse": 2.710705612475673,
+        "num_samples": 15
+      },
+      "count": {
+        "accuracy": 0.0,
+        "mse": 2.120756469274822,
+        "num_samples": 19
+      },
+      "mean": {
+        "accuracy": 0.25,
+        "mse": 0.2149581853785397,
+        "num_samples": 12
+      },
+      "cumsum": {
+        "accuracy": 0.0,
+        "mse": 61.28997357686361,
+        "num_samples": 9
+      },
+      "differences": {
+        "accuracy": 0.0,
+        "mse": 27.93541643354628,
+        "num_samples": 9
+      },
+      "alternating_sign": {
+        "accuracy": 0.0,
+        "mse": 25.464472115039825,
+        "num_samples": 16
+      }
+    },
+    "overall": {
+      "accuracy": 0.029213483146067417,
+      "mse": 145.233600234296
+    }
+  },
+  "with_search": {
+    "per_program": {
+      "square": {
+        "accuracy": 0.0,
+        "mse": 3310.836540222168,
+        "num_samples": 16
+      },
+      "negate": {
+        "accuracy": 0.0,
+        "mse": 26.091049627824262,
+        "num_samples": 11
+      },
+      "abs": {
+        "accuracy": 0.0,
+        "mse": 20.936069759455595,
+        "num_samples": 22
+      },
+      "add_3": {
+        "accuracy": 0.0,
+        "mse": 23.094953759511313,
+        "num_samples": 15
+      },
+      "add_5": {
+        "accuracy": 0.0,
+        "mse": 31.249266582986582,
+        "num_samples": 23
+      },
+      "multiply_2": {
+        "accuracy": 0.0,
+        "mse": 110.04332433428083,
+        "num_samples": 14
+      },
+      "multiply_3": {
+        "accuracy": 0.0,
+        "mse": 207.69626206618088,
+        "num_samples": 13
+      },
+      "subtract_1": {
+        "accuracy": 0.0,
+        "mse": 26.555495598736933,
+        "num_samples": 17
+      },
+      "increment": {
+        "accuracy": 0.0,
+        "mse": 21.790695746739704,
+        "num_samples": 12
+      },
+      "decrement": {
+        "accuracy": 0.0,
+        "mse": 21.9402072429657,
+        "num_samples": 8
+      },
+      "filter_positive": {
+        "accuracy": 0.058823529411764705,
+        "mse": 3.932968460023403,
+        "num_samples": 17
+      },
+      "filter_negative": {
+        "accuracy": 0.14285714285714285,
+        "mse": 3.6801472178527286,
+        "num_samples": 14
+      },
+      "filter_even": {
+        "accuracy": 0.0,
+        "mse": 7.4973669201135635,
+        "num_samples": 15
+      },
+      "filter_odd": {
+        "accuracy": 0.07142857142857142,
+        "mse": 4.273421994277409,
+        "num_samples": 14
+      },
+      "filter_greater_than_5": {
+        "accuracy": 0.47368421052631576,
+        "mse": 0.2725310374394451,
+        "num_samples": 19
+      },
+      "reverse": {
+        "accuracy": 0.0,
+        "mse": 26.96808656056722,
+        "num_samples": 15
+      },
+      "sort_ascending": {
+        "accuracy": 0.0,
+        "mse": 22.918862167157624,
+        "num_samples": 19
+      },
+      "sort_descending": {
+        "accuracy": 0.0,
+        "mse": 21.29533644283519,
+        "num_samples": 17
+      },
+      "take_first_3": {
+        "accuracy": 0.0,
+        "mse": 15.678315162658691,
+        "num_samples": 7
+      },
+      "take_last_3": {
+        "accuracy": 0.0,
+        "mse": 22.60010596684047,
+        "num_samples": 7
+      },
+      "duplicate_each": {
+        "accuracy": 0.0,
+        "mse": 42.71687977313995,
+        "num_samples": 20
+      },
+      "remove_duplicates": {
+        "accuracy": 0.0,
+        "mse": 21.357086181640625,
+        "num_samples": 15
+      },
+      "sum": {
+        "accuracy": 0.0,
+        "mse": 11.257017066921382,
+        "num_samples": 17
+      },
+      "max": {
+        "accuracy": 0.16666666666666666,
+        "mse": 0.19552728942491943,
+        "num_samples": 18
+      },
+      "min": {
+        "accuracy": 0.0,
+        "mse": 2.228590855995814,
+        "num_samples": 15
+      },
+      "count": {
+        "accuracy": 0.3684210526315789,
+        "mse": 0.23315687886880418,
+        "num_samples": 19
+      },
+      "mean": {
+        "accuracy": 0.08333333333333333,
+        "mse": 0.26765130925923586,
+        "num_samples": 12
+      },
+      "cumsum": {
+        "accuracy": 0.0,
+        "mse": 63.719815995958115,
+        "num_samples": 9
+      },
+      "differences": {
+        "accuracy": 0.0,
+        "mse": 28.039278030395508,
+        "num_samples": 9
+      },
+      "alternating_sign": {
+        "accuracy": 0.0,
+        "mse": 25.40475594997406,
+        "num_samples": 16
+      }
+    },
+    "overall": {
+      "accuracy": 0.05393258426966292,
+      "mse": 144.54833300030802
+    }
+  }
+}

@@ -11,6 +11,7 @@ import json
 from collections import defaultdict
 import numpy as np
 from tqdm import tqdm
+from typing import Dict
 
 from lpn_model import (
     LatentProgramNetwork, 

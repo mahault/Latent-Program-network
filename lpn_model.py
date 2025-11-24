@@ -235,29 +235,31 @@ class LatentProgramNetwork(nn.Module):
         # Initialize with encoder
         with torch.no_grad():
             mu, logvar = self.encoder(train_inputs, train_outputs)
-            z = mu.clone()  # Start from mean
+            z_init = mu.clone()  # Start from mean
         
-        # Make z require gradients
-        z = z.detach().requires_grad_(True)
+        # Make z a parameter that requires gradients
+        z = torch.nn.Parameter(z_init.clone().detach().requires_grad_(True))
         optimizer = torch.optim.Adam([z], lr=lr)
         
         # Optimize z to fit training examples
-        for step in range(num_steps):
-            optimizer.zero_grad()
-            
-            # Decode all training examples with current z
-            num_train = train_inputs.shape[1]
-            z_expanded = z.unsqueeze(1).expand(batch_size, num_train, -1)
-            
-            loss = 0
-            for i in range(num_train):
-                pred = self.decoder(z_expanded[:, i, :], train_inputs[:, i, :])
-                mask = train_masks[:, i, :]
-                loss += F.mse_loss(pred * mask, train_outputs[:, i, :] * mask)
-            
-            loss = loss / num_train
-            loss.backward()
-            optimizer.step()
+        # Use torch.enable_grad() to force gradient computation even in eval mode
+        with torch.enable_grad():
+            for step in range(num_steps):
+                optimizer.zero_grad()
+                
+                # Decode all training examples with current z
+                num_train = train_inputs.shape[1]
+                
+                loss = 0
+                for i in range(num_train):
+                    # Decode with current z
+                    pred = self.decoder(z, train_inputs[:, i, :])
+                    mask = train_masks[:, i, :]
+                    loss += F.mse_loss(pred * mask, train_outputs[:, i, :] * mask)
+                
+                loss = loss / num_train
+                loss.backward()
+                optimizer.step()
         
         # Use optimized z for test prediction
         with torch.no_grad():

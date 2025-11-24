@@ -249,7 +249,7 @@ def plot_heatmap(test_results, save_path='accuracy_heatmap.png'):
 def generate_summary_report(history, test_results, save_path='summary_report.txt'):
     """Generate text summary report"""
     
-    with open(save_path, 'w') as f:
+    with open(save_path, 'w', encoding='utf-8') as f:
         f.write("=" * 80 + "\n")
         f.write("LATENT PROGRAM NETWORK - EXPERIMENT SUMMARY\n")
         f.write("=" * 80 + "\n\n")
