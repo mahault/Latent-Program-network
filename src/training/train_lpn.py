@@ -8,8 +8,11 @@ from torch.utils.data import DataLoader
 import argparse
 from pathlib import Path
 import json
-from lpn_model import (
-    LatentProgramNetwork, 
+import sys
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
+from src.models.lpn_model import (
+    LatentProgramNetwork,
     ListOpsDataset,
     train_model
 )
@@ -17,7 +20,7 @@ from lpn_model import (
 
 def main():
     parser = argparse.ArgumentParser(description='Train Latent Program Network')
-    parser.add_argument('--data_dir', type=str, default='./list_ops_data',
+    parser.add_argument('--data_dir', type=str, default='./data/list_ops_data',
                       help='Path to data directory')
     parser.add_argument('--latent_dim', type=int, default=64,
                       help='Dimension of latent space')
@@ -95,17 +98,18 @@ def main():
     )
     
     # Save training history
-    history_path = Path('./training_history.json')
+    history_path = Path('./results/metrics/training_history.json')
+    history_path.parent.mkdir(parents=True, exist_ok=True)
     with open(history_path, 'w') as f:
         json.dump(history, f, indent=2)
     print(f"\n✓ Saved training history to {history_path}")
-    
+
     print("\n" + "=" * 60)
     print("Training complete!")
     print("=" * 60)
-    print(f"Best model saved to: best_lpn_model.pt")
+    print(f"Best model saved to: results/models/best_lpn_model.pt")
     print(f"Training history saved to: {history_path}")
-    print("\nNext step: Run 'python test_lpn.py' to evaluate with test-time search")
+    print("\nNext step: Run 'python src/testing/test_lpn.py' to evaluate with test-time search")
 
 
 if __name__ == "__main__":

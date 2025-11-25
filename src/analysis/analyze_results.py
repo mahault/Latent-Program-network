@@ -15,10 +15,10 @@ sns.set_style("whitegrid")
 
 def load_results():
     """Load training history and test results"""
-    with open('training_history.json', 'r') as f:
+    with open('results/metrics/training_history.json', 'r') as f:
         history = json.load(f)
     
-    with open('test_results.json', 'r') as f:
+    with open('results/metrics/test_results.json', 'r') as f:
         test_results = json.load(f)
     
     return history, test_results

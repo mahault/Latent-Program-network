@@ -290,7 +290,7 @@ def main():
     print(f"Total tasks: {len(dataset['train']) + len(dataset['val']) + len(dataset['test'])}")
     
     # Save dataset
-    output_dir = Path(r'./list_ops_data')
+    output_dir = Path(r'./data/list_ops_data')
     output_dir.mkdir(exist_ok=True)
     
     for split in ['train', 'val', 'test']:

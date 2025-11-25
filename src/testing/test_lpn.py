@@ -7,13 +7,16 @@ import torch
 from torch.utils.data import DataLoader
 import argparse
 from pathlib import Path
+import sys
+sys.path.append(str(Path(__file__).parent.parent.parent))
+
 import json
 from collections import defaultdict
 import numpy as np
 from tqdm import tqdm
 from typing import Dict
 
-from lpn_model import (
+from src.models.lpn_model import (
     LatentProgramNetwork, 
     ListOpsDataset,
     evaluate
@@ -176,9 +179,9 @@ def print_results_table(results: Dict):
 
 def main():
     parser = argparse.ArgumentParser(description='Test Latent Program Network')
-    parser.add_argument('--data_dir', type=str, default='./list_ops_data',
+    parser.add_argument('--data_dir', type=str, default='./data/list_ops_data',
                       help='Path to data directory')
-    parser.add_argument('--model_path', type=str, default='best_lpn_model.pt',
+    parser.add_argument('--model_path', type=str, default='results/models/best_lpn_model.pt',
                       help='Path to trained model')
     parser.add_argument('--latent_dim', type=int, default=64,
                       help='Dimension of latent space')

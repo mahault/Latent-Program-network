@@ -22,7 +22,8 @@ class ListOpsDataset(Dataset):
         with open(data_path, 'r') as f:
             self.data = json.load(f)
         self.max_length = max_length
-        
+        self.normalize = normalize
+        self.scale = scale  
     def __len__(self):
         return len(self.data)
     
@@ -60,7 +61,11 @@ class ListOpsDataset(Dataset):
             test_inputs.append(self.pad_sequence(ex['input']))
             test_outputs.append(self.pad_sequence(ex['output']))
             test_masks.append(self.get_length_mask(ex['output']))
-        
+        if self.normalize:
+            train_inputs = train_inputs / self.scale
+            train_outputs = train_outputs / self.scale
+            test_inputs = test_inputs / self.scale
+            test_outputs = test_outputs / self.scale
         return {
             'train_inputs': torch.stack(train_inputs),     # [num_examples, max_length]
             'train_outputs': torch.stack(train_outputs),   # [num_examples, max_length]
@@ -187,7 +192,7 @@ class Decoder(nn.Module):
         # Decode
         decoded, _ = self.decoder_rnn(processed)  # [batch, seq_len, hidden_dim]
         outputs = self.output_layer(decoded).squeeze(-1)  # [batch, seq_len]
-        
+        outputs = outputs * 300.0
         return outputs
 
 
@@ -413,7 +418,9 @@ def train_model(model: LatentProgramNetwork, train_loader: DataLoader, val_loade
         # Save best model
         if val_metrics['accuracy'] > best_val_acc:
             best_val_acc = val_metrics['accuracy']
-            torch.save(model.state_dict(), 'best_lpn_model.pt')
+            model_path = Path('results/models/best_lpn_model.pt')
+            model_path.parent.mkdir(parents=True, exist_ok=True)
+            torch.save(model.state_dict(), str(model_path))
             print(f"✓ Saved best model (acc: {best_val_acc:.4f})")
     
     return history
