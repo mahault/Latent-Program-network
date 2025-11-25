@@ -65,7 +65,7 @@ def run_poe_track():
         return False
     
     # Compare methods
-    if check_file_exists('best_lpn_model.pt', 'Baseline model'):
+    if check_file_exists('results/models/best_lpn_model.pt', 'Baseline model'):
         if not run_command('python compare_methods.py', 
                           'Compare PoE vs Baseline'):
             return False
@@ -80,7 +80,7 @@ def run_poe_track():
     print("  - best_poe_model.pt")
     print("  - poe_training_history.json")
     print("  - poe_test_results.json")
-    if Path('comparison_results.json').exists():
+    if Path('results/metrics/comparison_results.json').exists():
         print("  - comparison_results.json")
     
     return True
@@ -147,9 +147,9 @@ def quick_test():
     models = {
         'poe_model.py': 'Product of Experts model',
         'spatial_model.py': 'Spatial LPN model',
-        'train_poe.py': 'PoE training script',
-        'train_spatial.py': 'Spatial training script',
-        'generate_grid_data.py': 'Grid data generator'
+        'src/training/train_poe.py': 'PoE training script',
+        'src/training/train_spatial.py': 'Spatial training script',
+        'src/data_generation/generate_grid_data.py': 'Grid data generator'
     }
     
     for file, desc in models.items():

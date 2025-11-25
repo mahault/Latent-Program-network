@@ -1,13 +1,27 @@
-@"
+# Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
 *$py.class
+*.pyc
+*.pyo
+*.pyd
+
+# C extensions
 *.so
+
+# Distribution / packaging
 .Python
 *.egg-info/
 dist/
 build/
 *.egg
+
+# Environments
+.env
+.venv
+env/
+venv/
+ENV/
 
 # Model files (large)
 *.pt
@@ -24,6 +38,8 @@ build/
 .vscode/
 .idea/
 *.swp
+*.swo
+*~
 
 # OS
 .DS_Store
@@ -33,4 +49,3 @@ Thumbs.db
 analysis_outputs/
 *.png
 *.jpg
-"@ | Out-File -FilePath .gitignore -Encoding utf8

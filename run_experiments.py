@@ -37,7 +37,7 @@ def experiment_baseline(args):
     
     # Train
     if not run_command(
-        [sys.executable, 'train_lpn.py', 
+        [sys.executable, 'src/training/train_lpn.py', 
          '--num_epochs', str(args.epochs),
          '--batch_size', str(args.batch_size)],
         "Training Baseline LPN"
@@ -46,14 +46,14 @@ def experiment_baseline(args):
     
     # Test
     if not run_command(
-        [sys.executable, 'test_lpn.py'],
+        [sys.executable, 'src/testing/test_lpn.py'],
         "Testing Baseline LPN"
     ):
         return False
     
     # Analyze
     if not run_command(
-        [sys.executable, 'analyze_results.py'],
+        [sys.executable, 'src/analysis/analyze_results.py'],
         "Analyzing Baseline Results"
     ):
         return False
@@ -69,7 +69,7 @@ def experiment_poe(args):
     
     # Train
     if not run_command(
-        [sys.executable, 'train_poe.py',
+        [sys.executable, 'src/training/train_poe.py',
          '--num_epochs', str(args.epochs),
          '--batch_size', str(args.batch_size)],
         "Training PoE-LPN"
@@ -78,7 +78,7 @@ def experiment_poe(args):
     
     # Test
     if not run_command(
-        [sys.executable, 'test_poe.py'],
+        [sys.executable, 'src/testing/test_poe.py'],
         "Testing PoE-LPN"
     ):
         return False
@@ -93,17 +93,17 @@ def experiment_compare(args):
     print("="*70)
     
     # Check models exist
-    if not Path('best_lpn_model.pt').exists():
+    if not Path('results/models/best_lpn_model.pt').exists():
         print("✗ Baseline model not found. Run experiment 1 first.")
         return False
     
-    if not Path('best_poe_model.pt').exists():
+    if not Path('results/models/best_poe_model.pt').exists():
         print("✗ PoE model not found. Run experiment 2 first.")
         return False
     
     # Compare
     if not run_command(
-        [sys.executable, 'compare_methods.py'],
+        [sys.executable, 'src/analysis/compare_methods.py'],
         "Comparing Methods"
     ):
         return False
@@ -119,7 +119,7 @@ def experiment_spatial(args):
     
     # Train
     if not run_command(
-        [sys.executable, 'train_spatial.py',
+        [sys.executable, 'src/training/train_spatial.py',
          '--num_epochs', str(args.epochs),
          '--batch_size', str(max(args.batch_size // 2, 8))],  # Smaller batch for grids
         "Training Spatial LPN"
@@ -160,7 +160,7 @@ def main():
     print("="*70)
     
     # Check data exists
-    if not Path('list_ops_data').exists():
+    if not Path('data/list_ops_data').exists():
         print("\n✗ Data not found! Please run: python setup.py")
         return
     
@@ -215,11 +215,11 @@ def main():
         print("\nResults:")
         if Path('analysis_outputs').exists():
             print("  📊 Visualizations: analysis_outputs/")
-        if Path('test_results.json').exists():
+        if Path('results/metrics/test_results.json').exists():
             print("  📝 Baseline results: test_results.json")
-        if Path('poe_test_results.json').exists():
+        if Path('results/metrics/poe_test_results.json').exists():
             print("  📝 PoE results: poe_test_results.json")
-        if Path('comparison_results.json').exists():
+        if Path('results/metrics/comparison_results.json').exists():
             print("  📝 Comparison: comparison_results.json")
         
         print("\n" + "="*70)

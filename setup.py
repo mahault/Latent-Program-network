@@ -38,12 +38,12 @@ def generate_list_data():
     print("Generating List Operations Dataset")
     print("="*60)
     
-    if Path('list_ops_data').exists():
+    if Path('data/list_ops_data').exists():
         print("✓ list_ops_data already exists")
         return
     
     print("Running generate_list_data.py...")
-    subprocess.run([sys.executable, 'generate_list_data.py'], check=True)
+    subprocess.run([sys.executable, 'src/data_generation/generate_list_data.py'], check=True)
     print("✓ List operations data generated")
 
 
@@ -53,12 +53,12 @@ def generate_grid_data():
     print("Generating Synthetic Grid Dataset")
     print("="*60)
     
-    if Path('synthetic_grid_data').exists():
+    if Path('data/synthetic_grid_data').exists():
         print("✓ synthetic_grid_data already exists")
         return
     
     print("Running generate_grid_data.py...")
-    subprocess.run([sys.executable, 'generate_grid_data.py'], check=True)
+    subprocess.run([sys.executable, 'src/data_generation/generate_grid_data.py'], check=True)
     print("✓ Synthetic grid data generated")
 
 
@@ -68,12 +68,12 @@ def setup_arc_data():
     print("Setting Up ARC Dataset")
     print("="*60)
     
-    if Path('arc_data/training').exists():
+    if Path('data/arc_data/training').exists():
         print("✓ arc_data already exists")
         return
     
     print("Running arc_data.py to create sample tasks...")
-    subprocess.run([sys.executable, 'arc_data.py'], check=True)
+    subprocess.run([sys.executable, 'src/data_generation/arc_data.py'], check=True)
     
     print("\n" + "="*60)
     print("ARC Data Setup Instructions")
@@ -92,9 +92,9 @@ def verify_data():
     print("="*60)
     
     datasets = {
-        'List Operations': 'list_ops_data',
-        'Synthetic Grids': 'synthetic_grid_data',
-        'ARC (sample)': 'arc_data/training'
+        'List Operations': 'data/list_ops_data',
+        'Synthetic Grids': 'data/synthetic_grid_data',
+        'ARC (sample)': 'data/arc_data/training'
     }
     
     all_present = True

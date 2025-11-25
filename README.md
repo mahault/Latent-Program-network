@@ -24,53 +24,92 @@ This project aims to learn **compositional programs** through:
 ## 📁 Project Structure
 
 ```
-.
-├── generate_list_data.py      # [v0.1] Generate synthetic list ops
-├── lpn_model.py               # [v0.1] Current LSTM-based LPN
-├── train_lpn.py               # [v0.1] Training script
-├── test_lpn.py                # [v0.1] Testing with/without search
-├── analyze_results.py         # [v0.1] Visualization
+Latent-Program-Network/
+├── src/
+│   ├── models/              # Model architectures
+│   │   ├── lpn_model.py         # Baseline LSTM-based LPN
+│   │   ├── poe_model.py         # Product of Experts LPN
+│   │   └── spatial_model.py     # CNN-based spatial LPN
+│   ├── training/            # Training scripts
+│   │   ├── train_lpn.py
+│   │   ├── train_poe.py
+│   │   └── train_spatial.py
+│   ├── testing/             # Testing & evaluation
+│   │   ├── test_lpn.py
+│   │   ├── test_poe.py
+│   │   └── test_spatial.py
+│   ├── data_generation/     # Dataset creation
+│   │   ├── generate_list_data.py
+│   │   ├── generate_grid_data.py
+│   │   └── arc_data.py
+│   └── analysis/            # Visualization tools
+│       ├── analyze_results.py
+│       ├── analyze_poe_results.py
+│       └── compare_methods.py
 │
-├── spatial_lpn/               # [v1.0] NEW: Spatial architecture
-│   ├── spatial_model.py       # CNN/ViT for grids
-│   ├── product_of_experts.py  # Bayesian inference
-│   └── arc_data.py            # ARC dataset loader
+├── data/                    # All datasets
+│   ├── list_ops_data/           # 2,070 list operation tasks
+│   └── synthetic_grid_data/     # 600 grid transformation tasks
 │
-├── docs/
-│   ├── BAYESIAN_APPROACH.md   # Theory and motivation
-│   ├── PRODUCT_OF_EXPERTS.md  # PoE implementation guide
-│   └── ROADMAP.md             # Development phases
+├── results/                 # Training outputs
+│   ├── models/                  # .pt model checkpoints
+│   └── metrics/                 # .json result files
 │
-└── list_ops_data/             # Generated training data
+├── docs/                    # Documentation
+│   ├── START_HERE.md            # Getting started guide
+│   ├── BAYESIAN_APPROACH.md     # Theory (45 min)
+│   ├── PRODUCT_OF_EXPERTS.md    # PoE implementation (30 min)
+│   ├── ROADMAP.md               # 12-month development plan
+│   ├── TROUBLESHOOTING.md       # Problem solving
+│   └── QUICK_REFERENCE.md       # Command cheat sheet
+│
+├── utils/                   # Utility scripts
+│   └── diagnose.py
+│
+├── setup.py                 # One-command setup
+├── run_experiments.py       # Master experiment runner
+├── run_all.py               # Run all experiments
+└── README.md                # This file
 ```
 
-## 🚀 Quick Start (Current v0.1)
+## 🚀 Quick Start
 
-### Install Dependencies
+### Option 1: Automated Setup (Recommended)
 ```bash
-pip install -r requirements.txt
+# Setup everything in one command
+python setup.py
+
+# Run experiments
+python run_experiments.py --experiment baseline --quick
 ```
 
-### Train on List Operations (Baseline)
+### Option 2: Manual Training
 ```bash
-# 1. Generate data
-python generate_list_data.py
+# Install dependencies
+pip install torch numpy matplotlib seaborn tqdm
 
-# 2. Train model
-python train_lpn.py --num_epochs 50
+# Generate data
+python src/data_generation/generate_list_data.py
 
-# 3. Test with search
-python test_lpn.py
+# Train model
+python src/training/train_lpn.py --num_epochs 50
 
-# 4. Analyze results
-python analyze_results.py
+# Test with search
+python src/testing/test_lpn.py
+
+# Analyze results
+python src/analysis/analyze_results.py
 ```
 
 **Current capabilities:**
 - ✅ 30 list operation programs (square, filter, reverse, etc.)
-- ✅ Amortized inference via LSTM encoder
+- ✅ Product of Experts Bayesian inference
+- ✅ Spatial CNN model for 2D grids
 - ✅ Test-time gradient search in latent space
-- ✅ 3,000 synthetic tasks for training
+- ✅ 2,670 synthetic tasks (list + grid)
+- ✅ Complete training, testing, and visualization pipeline
+
+**For detailed instructions, see** `docs/START_HERE.md`
 
 ## 🎓 Theoretical Foundation
 
