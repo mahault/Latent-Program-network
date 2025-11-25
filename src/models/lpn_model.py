@@ -17,13 +17,14 @@ from tqdm import tqdm
 
 class ListOpsDataset(Dataset):
     """Dataset for list operation tasks"""
-    
-    def __init__(self, data_path: str, max_length: int = 20):
+
+    def __init__(self, data_path: str, max_length: int = 20, normalize: bool = True, scale: float = 10.0):
         with open(data_path, 'r') as f:
             self.data = json.load(f)
         self.max_length = max_length
         self.normalize = normalize
-        self.scale = scale  
+        self.scale = scale
+
     def __len__(self):
         return len(self.data)
     
@@ -61,17 +62,26 @@ class ListOpsDataset(Dataset):
             test_inputs.append(self.pad_sequence(ex['input']))
             test_outputs.append(self.pad_sequence(ex['output']))
             test_masks.append(self.get_length_mask(ex['output']))
+
+        # Stack tensors first
+        train_inputs = torch.stack(train_inputs)     # [num_examples, max_length]
+        train_outputs = torch.stack(train_outputs)   # [num_examples, max_length]
+        test_inputs = torch.stack(test_inputs)
+        test_outputs = torch.stack(test_outputs)
+
+        # Then normalize if needed
         if self.normalize:
             train_inputs = train_inputs / self.scale
             train_outputs = train_outputs / self.scale
             test_inputs = test_inputs / self.scale
             test_outputs = test_outputs / self.scale
+
         return {
-            'train_inputs': torch.stack(train_inputs),     # [num_examples, max_length]
-            'train_outputs': torch.stack(train_outputs),   # [num_examples, max_length]
+            'train_inputs': train_inputs,
+            'train_outputs': train_outputs,
             'train_masks': torch.stack(train_masks),       # [num_examples, max_length]
-            'test_inputs': torch.stack(test_inputs),
-            'test_outputs': torch.stack(test_outputs),
+            'test_inputs': test_inputs,
+            'test_outputs': test_outputs,
             'test_masks': torch.stack(test_masks),
             'program_type': task['program_type']
         }

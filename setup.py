@@ -19,17 +19,17 @@ def check_dependencies():
     for package in required:
         try:
             __import__(package)
-            print(f"  ✓ {package}")
+            print(f"  [OK] {package}")
         except ImportError:
             missing.append(package)
-            print(f"  ✗ {package} - MISSING")
-    
+            print(f"  [MISSING] {package}")
+
     if missing:
         print(f"\nInstalling missing packages: {missing}")
         subprocess.check_call([sys.executable, '-m', 'pip', 'install'] + missing)
-        print("✓ Dependencies installed")
+        print("[OK] Dependencies installed")
     else:
-        print("✓ All dependencies present")
+        print("[OK] All dependencies present")
 
 
 def generate_list_data():
@@ -39,12 +39,12 @@ def generate_list_data():
     print("="*60)
     
     if Path('data/list_ops_data').exists():
-        print("✓ list_ops_data already exists")
+        print("[OK] list_ops_data already exists")
         return
-    
+
     print("Running generate_list_data.py...")
     subprocess.run([sys.executable, 'src/data_generation/generate_list_data.py'], check=True)
-    print("✓ List operations data generated")
+    print("[OK] List operations data generated")
 
 
 def generate_grid_data():
@@ -54,12 +54,12 @@ def generate_grid_data():
     print("="*60)
     
     if Path('data/synthetic_grid_data').exists():
-        print("✓ synthetic_grid_data already exists")
+        print("[OK] synthetic_grid_data already exists")
         return
-    
+
     print("Running generate_grid_data.py...")
     subprocess.run([sys.executable, 'src/data_generation/generate_grid_data.py'], check=True)
-    print("✓ Synthetic grid data generated")
+    print("[OK] Synthetic grid data generated")
 
 
 def setup_arc_data():
@@ -69,7 +69,7 @@ def setup_arc_data():
     print("="*60)
     
     if Path('data/arc_data/training').exists():
-        print("✓ arc_data already exists")
+        print("[OK] arc_data already exists")
         return
     
     print("Running arc_data.py to create sample tasks...")
@@ -103,11 +103,11 @@ def verify_data():
             # Count files
             if Path(path).is_dir():
                 num_files = len(list(Path(path).glob('*.json')))
-                print(f"  ✓ {name}: {num_files} files")
+                print(f"  [OK] {name}: {num_files} files")
             else:
-                print(f"  ✓ {name}")
+                print(f"  [OK] {name}")
         else:
-            print(f"  ✗ {name} - MISSING")
+            print(f"  [MISSING] {name}")
             all_present = False
     
     return all_present
@@ -129,7 +129,7 @@ def main():
     # Verify everything
     if verify_data():
         print("\n" + "="*60)
-        print("✓ Setup Complete!")
+        print("[SUCCESS] Setup Complete!")
         print("="*60)
         print("\nYou can now run:")
         print("  python run_experiments.py --experiment baseline")

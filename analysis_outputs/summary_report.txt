@@ -4,10 +4,10 @@ LATENT PROGRAM NETWORK - EXPERIMENT SUMMARY
 
 TRAINING SUMMARY
 --------------------------------------------------------------------------------
-Total epochs: 50
-Final training loss: 138.8701
-Final validation accuracy: 0.0206
-Best validation accuracy: 0.0289
+Total epochs: 10
+Final training loss: 1.5217
+Final validation accuracy: 0.1753
+Best validation accuracy: 0.1753
 
 TEST RESULTS
 --------------------------------------------------------------------------------

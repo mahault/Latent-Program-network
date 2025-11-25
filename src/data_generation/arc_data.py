@@ -201,7 +201,7 @@ def download_arc_sample():
         with open(task_file, 'w') as f:
             json.dump(task, f)
     
-    print(f"✓ Created {len(samples)} sample tasks in {training_dir}")
+    print(f"[OK] Created {len(samples)} sample tasks in {training_dir}")
     print(f"\nTo use real ARC data:")
     print(f"1. Clone: git clone https://github.com/fchollet/ARC-AGI.git")
     print(f"2. Copy data/training/*.json to {training_dir}/")
@@ -222,7 +222,7 @@ if __name__ == "__main__":
     if len(dataset) > 0:
         # Get first task
         task = dataset[0]
-        print(f"\n✓ Loaded dataset successfully")
+        print(f"\n[OK] Loaded dataset successfully")
         print(f"  Number of tasks: {len(dataset)}")
         print(f"  First task ID: {task['task_id']}")
         print(f"  Training examples: {task['train_inputs'].shape[0]}")
