@@ -1,0 +1,302 @@
+"""
+Spatial Latent Program Network for Grid Inputs
+Handles 2D grids (like ARC tasks) instead of 1D sequences
+"""
+
+import torch
+import torch.nn as nn
+import torch.nn.functional as F
+from typing import Tuple
+
+
+class SpatialEncoder(nn.Module):
+    """
+    Encodes 2D grid (H x W) with discrete colors to latent distribution
+    Uses CNN to capture spatial structure
+    """
+    
+    def __init__(self, num_colors: int = 16, latent_dim: int = 64, hidden_dim: int = 128):
+        super().__init__()
+        
+        self.num_colors = num_colors
+        self.latent_dim = latent_dim
+        
+        # Embed discrete colors
+        self.color_embed = nn.Embedding(num_colors, 32)
+        
+        # CNN encoder for spatial structure
+        self.conv_layers = nn.Sequential(
+            # Input: [batch, 32, H, W]
+            nn.Conv2d(32, 64, kernel_size=3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, kernel_size=3, stride=2, padding=1),  # Downsample
+            nn.ReLU(),
+            nn.Conv2d(128, 256, kernel_size=3, stride=2, padding=1),  # Downsample
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((4, 4))  # Fixed size output
+        )
+        
+        # Process each example
+        self.example_processor = nn.LSTM(256 * 16, hidden_dim, batch_first=True)
+        
+        # Output distribution
+        self.fc_mu = nn.Linear(hidden_dim, latent_dim)
+        self.fc_logvar = nn.Linear(hidden_dim, latent_dim)
+    
+    def forward(self, input_grids: torch.Tensor, output_grids: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor]:
+        """
+        Args:
+            input_grids: [batch, num_examples, H, W] - discrete color indices
+            output_grids: [batch, num_examples, H, W]
+        Returns:
+            mu: [batch, latent_dim]
+            logvar: [batch, latent_dim]
+        """
+        batch_size, num_examples, H, W = input_grids.shape
+        
+        # Flatten batch and examples
+        input_flat = input_grids.view(batch_size * num_examples, H, W).long()
+        output_flat = output_grids.view(batch_size * num_examples, H, W).long()
+        
+        # Embed colors
+        input_embedded = self.color_embed(input_flat)  # [B*N, H, W, 32]
+        output_embedded = self.color_embed(output_flat)
+        
+        # Permute to channel-first: [B*N, 32, H, W]
+        input_embedded = input_embedded.permute(0, 3, 1, 2)
+        output_embedded = output_embedded.permute(0, 3, 1, 2)
+        
+        # Encode with CNN
+        input_features = self.conv_layers(input_embedded)  # [B*N, 256, 4, 4]
+        output_features = self.conv_layers(output_embedded)
+        
+        # Flatten spatial dimensions (use reshape for non-contiguous tensors)
+        input_features = input_features.reshape(batch_size * num_examples, -1)
+        output_features = output_features.reshape(batch_size * num_examples, -1)
+        
+        # Combine input and output features
+        combined = torch.cat([input_features, output_features], dim=-1)  # [B*N, 256*16*2]
+        combined = combined[:, :256*16]  # Keep only first half for now (simplification)
+        
+        # Reshape back to [batch, num_examples, features]
+        combined = combined.view(batch_size, num_examples, -1)
+        
+        # Aggregate across examples with LSTM
+        _, (hidden, _) = self.example_processor(combined)
+        aggregated = hidden[-1]  # [batch, hidden_dim]
+        
+        # Output distribution
+        mu = self.fc_mu(aggregated)
+        logvar = self.fc_logvar(aggregated)
+        
+        return mu, logvar
+
+
+class SpatialDecoder(nn.Module):
+    """
+    Decodes latent θ + input grid → output grid
+    Uses transposed convolutions for spatial generation
+    """
+    
+    def __init__(self, num_colors: int = 16, latent_dim: int = 64, hidden_dim: int = 128):
+        super().__init__()
+        
+        self.num_colors = num_colors
+        
+        # Embed input grid colors
+        self.color_embed = nn.Embedding(num_colors, 32)
+        
+        # Encode input grid
+        self.input_encoder = nn.Sequential(
+            nn.Conv2d(32, 64, 3, padding=1),
+            nn.ReLU(),
+            nn.Conv2d(64, 128, 3, stride=2, padding=1),
+            nn.ReLU(),
+            nn.AdaptiveAvgPool2d((4, 4))
+        )
+        
+        # Combine latent with encoded input
+        self.latent_processor = nn.Linear(latent_dim + 128 * 16, 256 * 16)
+        
+        # Decoder: upsample to full grid
+        self.decoder = nn.Sequential(
+            nn.Unflatten(1, (256, 4, 4)),
+            nn.ConvTranspose2d(256, 128, 4, stride=2, padding=1),  # 8x8
+            nn.ReLU(),
+            nn.ConvTranspose2d(128, 64, 4, stride=2, padding=1),   # 16x16
+            nn.ReLU(),
+            nn.ConvTranspose2d(64, 32, 4, stride=2, padding=1),    # 32x32
+            nn.ReLU(),
+            nn.Conv2d(32, num_colors, 3, padding=1)  # Final: [batch, num_colors, H, W]
+        )
+    
+    def forward(self, z: torch.Tensor, input_grid: torch.Tensor) -> torch.Tensor:
+        """
+        Args:
+            z: [batch, latent_dim]
+            input_grid: [batch, H, W] - discrete color indices
+        Returns:
+            output_logits: [batch, num_colors, H, W]
+        """
+        batch_size, H, W = input_grid.shape
+        
+        # Embed input colors
+        input_embedded = self.color_embed(input_grid.long())  # [batch, H, W, 32]
+        input_embedded = input_embedded.permute(0, 3, 1, 2)   # [batch, 32, H, W]
+        
+        # Encode input
+        input_encoded = self.input_encoder(input_embedded)  # [batch, 128, 4, 4]
+        input_encoded = input_encoded.view(batch_size, -1)  # [batch, 128*16]
+        
+        # Combine with latent
+        combined = torch.cat([z, input_encoded], dim=-1)
+        processed = self.latent_processor(combined)  # [batch, 256*16]
+        
+        # Decode to grid
+        output_logits = self.decoder(processed)  # [batch, num_colors, 32, 32]
+        
+        # Resize to match input size if needed
+        if output_logits.shape[-2:] != (H, W):
+            output_logits = F.interpolate(output_logits, size=(H, W), mode='bilinear', align_corners=False)
+        
+        return output_logits
+
+
+class SpatialLPN(nn.Module):
+    """
+    Complete Spatial LPN for grid-based tasks (like ARC)
+    """
+    
+    def __init__(self, num_colors: int = 16, latent_dim: int = 64, hidden_dim: int = 128):
+        super().__init__()
+        
+        self.num_colors = num_colors
+        self.latent_dim = latent_dim
+        
+        self.encoder = SpatialEncoder(num_colors, latent_dim, hidden_dim)
+        self.decoder = SpatialDecoder(num_colors, latent_dim, hidden_dim)
+    
+    def reparameterize(self, mu: torch.Tensor, logvar: torch.Tensor) -> torch.Tensor:
+        """Reparameterization trick"""
+        std = torch.exp(0.5 * logvar)
+        eps = torch.randn_like(std)
+        return mu + eps * std
+    
+    def forward(self, train_input_grids: torch.Tensor, train_output_grids: torch.Tensor,
+                test_input_grid: torch.Tensor) -> Tuple[torch.Tensor, torch.Tensor, torch.Tensor]:
+        """
+        Forward pass
+        
+        Args:
+            train_input_grids: [batch, num_examples, H, W]
+            train_output_grids: [batch, num_examples, H, W]
+            test_input_grid: [batch, H, W]
+        Returns:
+            output_logits: [batch, num_colors, H, W]
+            mu: [batch, latent_dim]
+            logvar: [batch, latent_dim]
+        """
+        # Encode examples
+        mu, logvar = self.encoder(train_input_grids, train_output_grids)
+        
+        # Sample latent
+        z = self.reparameterize(mu, logvar)
+        
+        # Decode test input
+        output_logits = self.decoder(z, test_input_grid)
+        
+        return output_logits, mu, logvar
+    
+    def predict_with_search(self, train_input_grids: torch.Tensor, train_output_grids: torch.Tensor,
+                           test_input_grid: torch.Tensor, num_steps: int = 50, lr: float = 0.1) -> torch.Tensor:
+        """
+        Test-time optimization in latent space
+        """
+        batch_size = train_input_grids.shape[0]
+        
+        # Initialize from encoder
+        with torch.no_grad():
+            mu, logvar = self.encoder(train_input_grids, train_output_grids)
+            z_init = mu.clone()
+        
+        # Make z optimizable
+        z = torch.nn.Parameter(z_init.clone().detach().requires_grad_(True))
+        optimizer = torch.optim.Adam([z], lr=lr)
+        
+        # Optimize z to fit training examples
+        with torch.enable_grad():
+            for step in range(num_steps):
+                optimizer.zero_grad()
+                
+                num_train = train_input_grids.shape[1]
+                loss = 0
+                
+                for i in range(num_train):
+                    logits = self.decoder(z, train_input_grids[:, i, :, :])
+                    target = train_output_grids[:, i, :, :].long()
+                    loss += F.cross_entropy(logits, target)
+                
+                loss = loss / num_train
+                loss.backward()
+                optimizer.step()
+        
+        # Use optimized z for prediction
+        with torch.no_grad():
+            output_logits = self.decoder(z, test_input_grid)
+        
+        return output_logits
+
+
+def compute_spatial_loss(logits: torch.Tensor, targets: torch.Tensor,
+                        mu: torch.Tensor, logvar: torch.Tensor, beta: float = 0.01):
+    """
+    Compute loss for spatial LPN
+    
+    Args:
+        logits: [batch, num_colors, H, W]
+        targets: [batch, H, W] - discrete color indices
+        mu, logvar: Latent distribution parameters
+        beta: KL weight
+    """
+    # Cross-entropy loss (classification per pixel)
+    ce_loss = F.cross_entropy(logits, targets.long())
+    
+    # KL divergence (same as before)
+    kl_loss = -0.5 * torch.sum(1 + logvar - mu.pow(2) - logvar.exp()) / mu.shape[0]
+    
+    # Total loss
+    total_loss = ce_loss + beta * kl_loss
+    
+    return {
+        'total': total_loss,
+        'ce': ce_loss,
+        'kl': kl_loss
+    }
+
+
+if __name__ == "__main__":
+    print("Spatial LPN for Grid Tasks")
+    print("=" * 60)
+    
+    # Test model
+    model = SpatialLPN(num_colors=16, latent_dim=64, hidden_dim=128)
+    
+    # Dummy grid data
+    batch_size = 4
+    num_examples = 3
+    H, W = 32, 32
+    
+    train_inputs = torch.randint(0, 16, (batch_size, num_examples, H, W))
+    train_outputs = torch.randint(0, 16, (batch_size, num_examples, H, W))
+    test_input = torch.randint(0, 16, (batch_size, H, W))
+    
+    # Forward pass
+    output_logits, mu, logvar = model(train_inputs, train_outputs, test_input)
+    
+    print(f"✓ Model initialized")
+    print(f"  Parameters: {sum(p.numel() for p in model.parameters()):,}")
+    print(f"  Latent dim: {model.latent_dim}")
+    print(f"\n✓ Forward pass successful")
+    print(f"  Output logits shape: {output_logits.shape}")
+    print(f"  Predicted grid shape: {output_logits.argmax(dim=1).shape}")
+    print(f"\n✓ Ready for grid-based tasks (ARC)!")

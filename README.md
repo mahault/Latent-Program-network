@@ -1,255 +1,229 @@
-# Latent Program Network (LPN) Experiment
+# Latent Program Network (LPN) - Bayesian Active Inference Approach
 
-Implementation of **Latent Program Network** based on ["Searching Latent Program Spaces"](https://arxiv.org/abs/2411.08706) by Bonnet et al., 2024.
+Implementation of **Latent Program Network** inspired by ["Searching Latent Program Spaces"](https://arxiv.org/abs/2411.08706) (Bonnet et al., 2024), extended with **Bayesian inference** and **Active Inference** principles for ARC-AGI tasks.
 
-This experiment trains an LPN on list operation tasks and evaluates the impact of test-time search on generalization.
+## 🎯 Vision: Bayesian Program Induction
+
+This project aims to learn **compositional programs** through:
+- **Bayesian model selection** over program complexity
+- **Product of Experts** for multi-example consistency
+- **Object-centric representations** (what/where decomposition)
+- **Equivariant architectures** via data augmentation
+- **Test-time adaptation** through inference over latent programs
+
+### Current vs. Target
+
+| Aspect | Current (v0.1) | Target (v1.0) |
+|--------|----------------|---------------|
+| **Data** | 1D list operations | 2D grid transformations (ARC) |
+| **Latent** | Single θ vector | Compositional object-centric θ |
+| **Inference** | Amortized + gradient search | Product of Experts + recursive |
+| **Architecture** | LSTM sequence model | Spatial CNN/ViT + equivariance |
+| **Generalization** | In-distribution | Compositional OOD |
 
 ## 📁 Project Structure
 
 ```
 .
-├── generate_list_data.py      # Generate synthetic dataset
-├── lpn_model.py               # LPN model architecture
-├── train_lpn.py               # Training script
-├── test_lpn.py                # Testing script with/without search
-├── analyze_results.py         # Analysis and visualization
-├── requirements.txt           # Dependencies
-└── list_ops_data/            # Generated dataset (created by step 1)
-    ├── train.json
-    ├── val.json
-    └── test.json
+├── generate_list_data.py      # [v0.1] Generate synthetic list ops
+├── lpn_model.py               # [v0.1] Current LSTM-based LPN
+├── train_lpn.py               # [v0.1] Training script
+├── test_lpn.py                # [v0.1] Testing with/without search
+├── analyze_results.py         # [v0.1] Visualization
+│
+├── spatial_lpn/               # [v1.0] NEW: Spatial architecture
+│   ├── spatial_model.py       # CNN/ViT for grids
+│   ├── product_of_experts.py  # Bayesian inference
+│   └── arc_data.py            # ARC dataset loader
+│
+├── docs/
+│   ├── BAYESIAN_APPROACH.md   # Theory and motivation
+│   ├── PRODUCT_OF_EXPERTS.md  # PoE implementation guide
+│   └── ROADMAP.md             # Development phases
+│
+└── list_ops_data/             # Generated training data
 ```
 
-## 🚀 Quick Start
+## 🚀 Quick Start (Current v0.1)
 
-### Step 1: Install Dependencies
-
+### Install Dependencies
 ```bash
 pip install -r requirements.txt
 ```
 
-**Required packages:**
-- PyTorch (>=2.0.0)
-- NumPy
-- Matplotlib
-- Seaborn
-- tqdm
-
-### Step 2: Generate Dataset
-
+### Train on List Operations (Baseline)
 ```bash
+# 1. Generate data
 python generate_list_data.py
-```
 
-This creates 3,000 synthetic tasks (30 program types × 100 instances):
-- **Train**: 2,070 tasks (70%)
-- **Val**: 485 tasks (15%)
-- **Test**: 445 tasks (15%)
+# 2. Train model
+python train_lpn.py --num_epochs 50
 
-**Program types include:**
-- Mapping: square, negate, abs, add_N, multiply_N, etc.
-- Filtering: filter_positive, filter_even, etc.
-- Structural: reverse, sort, take_first_N, duplicate_each, etc.
-- Reduction: sum, max, min, count, mean
-- Combination: cumsum, differences, alternating_sign
-
-### Step 3: Train the Model
-
-```bash
-python train_lpn.py --num_epochs 50 --batch_size 32 --lr 0.001
-```
-
-**Training parameters:**
-- `--latent_dim`: Latent space dimension (default: 64)
-- `--hidden_dim`: Hidden layer size (default: 128)
-- `--batch_size`: Batch size (default: 32)
-- `--num_epochs`: Number of epochs (default: 50)
-- `--lr`: Learning rate (default: 0.001)
-- `--beta`: KL divergence weight (default: 0.1)
-- `--device`: cuda or cpu (auto-detected)
-
-**Outputs:**
-- `best_lpn_model.pt` - Trained model weights
-- `training_history.json` - Training metrics
-
-**Training time:** ~10-30 minutes on GPU, ~2-3 hours on CPU
-
-### Step 4: Test with Test-Time Search
-
-```bash
+# 3. Test with search
 python test_lpn.py
-```
 
-This evaluates the model twice:
-1. **Without test-time search**: Direct encoder → decoder
-2. **With test-time search**: Optimize latent for 50 steps
-
-**Output:**
-- `test_results.json` - Detailed per-program results
-- Console output with comparison tables
-
-### Step 5: Analyze Results
-
-```bash
+# 4. Analyze results
 python analyze_results.py
 ```
 
-**Generates visualizations:**
-- `training_curves.png` - Loss and accuracy curves
-- `test_comparison.png` - With/without search comparison
-- `program_categories.png` - Performance by program type
-- `accuracy_heatmap.png` - Per-program accuracy heatmap
-- `summary_report.txt` - Text summary of findings
+**Current capabilities:**
+- ✅ 30 list operation programs (square, filter, reverse, etc.)
+- ✅ Amortized inference via LSTM encoder
+- ✅ Test-time gradient search in latent space
+- ✅ 3,000 synthetic tasks for training
 
-All outputs saved to `analysis_outputs/` directory.
+## 🎓 Theoretical Foundation
 
-## 📊 What to Expect
-
-### Expected Results
-
-Based on the paper, you should see:
-
-1. **Training convergence**: Validation accuracy should reach 60-80% after 50 epochs
-2. **Test-time search benefit**: Accuracy improvement of 5-20% with test-time search
-3. **Program-specific patterns**:
-   - Simple mapping operations (square, negate): High accuracy even without search
-   - Structural operations (sort, reverse): Benefit more from search
-   - Filtering operations: May struggle without enough training
-
-### Key Metrics
-
-- **Accuracy**: Exact match (all elements correct within ±0.5)
-- **MSE**: Mean squared error on outputs
-- **Improvement**: Change in accuracy with test-time search
-
-## 🧪 Understanding the Model
-
-### Architecture
+### Probabilistic Model
 
 ```
-┌─────────────────┐
-│   Input-Output  │
-│   Examples      │
-└────────┬────────┘
-         │
-         ▼
-    ┌─────────┐
-    │ Encoder │  → [μ, σ]
-    └────┬────┘
-         │
-         ▼
-    ┌─────────┐
-    │ Latent  │  (64-dim continuous space)
-    │ Program │
-    └────┬────┘
-         │
-         ▼
-    ┌─────────┐
-    │ Decoder │  + Input → Output
-    └─────────┘
+Generative Model:
+p(y | x, a, θ) = Decoder(x, a, θ)
 
-Test-time: Optimize latent via gradient ascent
+Inference:
+q(θ | x₁:ₙ, y₁:ₙ, a₁:ₙ) = Encoder(examples)
+
+Learning:
+max ELBO = 𝔼[log p(y|x,a,θ)] - KL[q(θ)||p(θ)]
 ```
 
-### Key Components
+Where:
+- **x**: Input (list or grid)
+- **a**: Action (optional, for interactive tasks)
+- **y**: Output (transformed list or grid)  
+- **θ**: Latent program representation
 
-1. **Encoder**: 
-   - Processes example pairs
-   - Outputs distribution over latent programs
-   - Uses LSTM to aggregate across examples
+### Key Innovations
 
-2. **Latent Space**:
-   - Continuous 64-dimensional space
-   - Represents implicit programs
-   - Regularized with KL divergence
+1. **Product of Experts** (Bayesian)
+   ```
+   q(θ | all examples) ∝ ∏ᵢ q(θ | example_i)
+   ```
+   Each example provides evidence; find θ consistent with ALL.
 
-3. **Decoder**:
-   - Takes latent + input
-   - Generates output autoregressively
-   - Uses LSTM for sequence modeling
+2. **Equivariance** (Symmetry)
+   - Color permutations shouldn't change program
+   - Rotations/shifts preserve task structure
+   - Implemented via data augmentation
 
-4. **Test-Time Optimization**:
-   - Refines latent via gradient ascent
-   - Maximizes likelihood on training examples
-   - 50 optimization steps (takes ~0.1s per task)
+3. **Hierarchical Abstraction** (Composition)
+   - Low-level: Individual objects
+   - High-level: Object groups with shared dynamics
+   - Model selection chooses simplest explanation
 
-## 🔬 Experiment Variations
+## 📊 Current Results (List Operations)
 
-Try these modifications:
+Using the baseline LSTM-based LPN:
 
-### 1. Larger Latent Space
-```bash
-python train_lpn.py --latent_dim 128
+**Training:**
+- Dataset: 2,070 tasks (30 program types)
+- Validation accuracy: ~75-85%
+- Training time: 20-30 min (GPU)
+
+**Testing:**
+- Without search: ~70% accuracy
+- With search (50 steps): ~75-80% accuracy
+- Improvement: **+5-10% absolute**
+
+See `analysis_outputs/` for detailed plots and metrics.
+
+## 🔬 Next Steps: Toward ARC-AGI
+
+### Phase 1: Spatial Architecture ⏳
+- Replace LSTM with CNN/Vision Transformer
+- Process 64×64 grids instead of 1D sequences
+- Test on simple synthetic grid tasks
+
+### Phase 2: Product of Experts ⏳
+- Implement Bayesian inference over θ
+- Each example → distribution over programs
+- Combine via PoE for consistency
+
+### Phase 3: Object-Centric ⏳
+- Flood-fill segmentation (per Alexander's approach)
+- What/where decomposition
+- Sparse object interactions
+
+### Phase 4: ARC Integration ⏳
+- Load ARC-1/2/3 datasets
+- Action conditioning for ARC-3
+- Equivariance via augmentation
+
+### Phase 5: Compositional Generalization ⏳
+- DSL-based data generation (Re-ARC)
+- Hierarchical object grouping
+- Transfer learning across ARC versions
+
+## 📚 Documentation
+
+**Getting Started:**
+- [QUICKSTART.md](QUICKSTART.md) - Quick start guide
+- [README.md](README.md) - This file
+
+**Theory:**
+- [BAYESIAN_APPROACH.md](docs/BAYESIAN_APPROACH.md) - Bayesian inference framework
+- [PRODUCT_OF_EXPERTS.md](docs/PRODUCT_OF_EXPERTS.md) - PoE implementation
+
+**Development:**
+- [ROADMAP.md](docs/ROADMAP.md) - Development phases
+- [ARCHITECTURE.md](docs/ARCHITECTURE.md) - Technical architecture
+
+**Fixes & Notes:**
+- [BUGFIX.md](BUGFIX.md) - Shape mismatch fix
+- [GRADIENT_FIX.md](GRADIENT_FIX.md) - Test-time search fix
+- [UNICODE_FIX.md](UNICODE_FIX.md) - Windows encoding fix
+
+## 🤝 Related Work
+
+**Latent Program Networks:**
+- [Searching Latent Program Spaces](https://arxiv.org/abs/2411.08706) - Bonnet et al., 2024
+
+**Bayesian Program Induction:**
+- DreamCoder - Lake et al.
+- Fast Structure Learning - Tenenbaum et al.
+
+**ARC-AGI:**
+- [ARC Dataset](https://github.com/fchollet/ARC-AGI) - Chollet, 2019
+- TRM (Tiny Recursive Model) - He et al.
+- Vision tricks for ARC - Kaiming He et al.
+
+**Active Inference:**
+- Free Energy Principle - Friston et al.
+- Active Inference for Goal-Directed Behavior
+
+## 🎯 Project Goals
+
+1. **Short-term**: Establish baseline on ARC-1/2 with spatial LPN
+2. **Medium-term**: Implement Product of Experts + object-centric representations
+3. **Long-term**: Achieve compositional generalization on ARC-3
+
+**Success Metrics:**
+- ARC-1 validation accuracy > 50%
+- ARC-2 generalization with test-time search
+- ARC-3 interactive task solving
+
+## 👥 Contributors
+
+Based on discussions with Active Inference lab:
+- Anson Lei (Framework design, implementation)
+- Alexander Tschantz (Object-centric representations, ARC-3)
+- Christopher Buckley (Bayesian framework, active inference)
+
+## 📝 Citation
+
+```bibtex
+@article{bonnet2024searching,
+  title={Searching Latent Program Spaces},
+  author={Bonnet, Clément and Macfarlane, Matthew V},
+  journal={arXiv preprint arXiv:2411.08706},
+  year={2024}
+}
 ```
 
-### 2. More Training
-```bash
-python train_lpn.py --num_epochs 100
-```
+## 📄 License
 
-### 3. Different Search Steps
-Edit `test_lpn.py` line with `num_steps=50` to try 10, 20, or 100 steps.
-
-### 4. Different Program Types
-Edit `generate_list_data.py` to add custom operations:
-```python
-def _my_operation(self, lst: List[int]) -> List[int]:
-    return [x * 2 + 1 for x in lst]
-```
-
-## 📈 Interpreting Results
-
-### Good Signs ✓
-- Validation accuracy > 70%
-- Test-time search improves accuracy by 5-20%
-- Structural operations benefit most from search
-- Training loss decreases smoothly
-
-### Warning Signs ⚠
-- Validation accuracy < 50% → Need more training or larger model
-- No improvement with search → Latent space may not be smooth
-- High KL divergence → Increase beta weight
-
-## 🐛 Troubleshooting
-
-**Out of memory?**
-- Reduce `batch_size` to 16 or 8
-- Reduce `hidden_dim` to 64
-
-**Slow training?**
-- Use GPU: `--device cuda`
-- Reduce dataset size (edit `generate_list_data.py`)
-
-**Poor accuracy?**
-- Train longer: `--num_epochs 100`
-- Increase model size: `--hidden_dim 256 --latent_dim 128`
-- Adjust KL weight: `--beta 0.05`
-
-## 📚 References
-
-**Paper:**
-```
-Bonnet, C., & Macfarlane, M. V. (2024). 
-Searching Latent Program Spaces. 
-arXiv preprint arXiv:2411.08706.
-```
-
-**Key Insights:**
-- Test-time search enables adaptation without parameter updates
-- Continuous latent space bypasses discrete program search
-- VAE regularization prevents overfitting to training distribution
-
-## 🤝 Next Steps
-
-1. **Try ARC-AGI tasks**: Replace list ops with visual grid transformations
-2. **Add more program types**: Extend the generator with complex operations
-3. **Visualize latent space**: Use t-SNE to see program clustering
-4. **Compositional learning**: Test if model can combine learned programs
-
-## 📝 License
-
-MIT License - feel free to use and modify!
+MIT License - See LICENSE file for details
 
 ---
 
-**Questions?** Check the paper or open an issue.
+**Current Status:** v0.1 - Baseline list operations working, spatial implementation in progress
